@@ -18,6 +18,9 @@ export interface ValidatedEventInput {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+// "24:00" is a valid dayEndTime meaning midnight at the end of the day (an
+// "all day" window), so the last 30-minute slot of the day is included.
+const END_OF_DAY = "24:00";
 
 export function validateCreateEventInput(
   input: CreateEventInput,
@@ -46,7 +49,8 @@ export function validateCreateEventInput(
     };
   }
 
-  if (!TIME_RE.test(input.dayStartTime) || !TIME_RE.test(input.dayEndTime)) {
+  const dayEndValid = TIME_RE.test(input.dayEndTime) || input.dayEndTime === END_OF_DAY;
+  if (!TIME_RE.test(input.dayStartTime) || !dayEndValid) {
     return { ok: false, error: "Invalid time." };
   }
   if (input.dayStartTime >= input.dayEndTime) {

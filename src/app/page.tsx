@@ -12,6 +12,7 @@ export default function Home() {
   const [endDate, setEndDate] = useState("");
   const [dayStartTime, setDayStartTime] = useState("09:00");
   const [dayEndTime, setDayEndTime] = useState("21:00");
+  const [allDay, setAllDay] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -19,7 +20,13 @@ export default function Home() {
     e.preventDefault();
     setError(null);
 
-    const input = { title, startDate, endDate, dayStartTime, dayEndTime };
+    const input = {
+      title,
+      startDate,
+      endDate,
+      dayStartTime: allDay ? "00:00" : dayStartTime,
+      dayEndTime: allDay ? "24:00" : dayEndTime,
+    };
     const validated = validateCreateEventInput(input);
     if (!validated.ok) {
       setError(validated.error);
@@ -93,29 +100,43 @@ export default function Home() {
             Up to {MAX_DATE_RANGE_DAYS} days.
           </p>
 
-          <div className="flex gap-3">
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              Available from
-              <input
-                type="time"
-                value={dayStartTime}
-                onChange={(e) => setDayStartTime(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              Until
-              <input
-                type="time"
-                value={dayEndTime}
-                onChange={(e) => setDayEndTime(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-              />
-            </label>
-          </div>
+          <label className="-mb-2 flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <input
+              type="checkbox"
+              checked={allDay}
+              onChange={(e) => setAllDay(e.target.checked)}
+              className="h-4 w-4"
+            />
+            All day (midnight to midnight)
+          </label>
+
+          {!allDay && (
+            <div className="flex gap-3">
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                Available from
+                <input
+                  type="time"
+                  value={dayStartTime}
+                  onChange={(e) => setDayStartTime(e.target.value)}
+                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                Until
+                <input
+                  type="time"
+                  value={dayEndTime}
+                  onChange={(e) => setDayEndTime(e.target.value)}
+                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                />
+              </label>
+            </div>
+          )}
           <p className="-mt-3 text-xs text-zinc-500 dark:text-zinc-500">
             Applied to every day in the range. No timezone conversion — use
             whatever timezone you have in mind.
+            {allDay &&
+              " For an overnight span, respondents can mark late slots on one day and early slots on the next."}
           </p>
 
           {error && (

@@ -45,6 +45,15 @@ describe("generateSlots", () => {
     const day = new Date(Date.UTC(2026, 0, 1));
     expect(generateSlots(day, day, "09:00", "09:15")).toEqual([]);
   });
+
+  it("covers the full 24 hours for an all-day window (00:00-24:00)", () => {
+    const day = new Date(Date.UTC(2026, 0, 1));
+    const slots = generateSlots(day, day, "00:00", "24:00");
+
+    expect(slots).toHaveLength(48);
+    expect(slots[0].toISOString()).toBe("2026-01-01T00:00:00.000Z");
+    expect(slots[slots.length - 1].toISOString()).toBe("2026-01-01T23:30:00.000Z");
+  });
 });
 
 describe("aggregateAvailability", () => {
