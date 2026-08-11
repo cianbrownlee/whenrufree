@@ -62,6 +62,20 @@ export function AvailabilityGrid(props: Props) {
     window.addEventListener("pointerup", handlePointerUp);
   }
 
+  function handleDayHeaderClick(day: Date[]) {
+    if (props.mode !== "edit") return;
+    const isos = day.map((slot) => slot.toISOString());
+    props.onSelectedChange((prev) => {
+      const allSelected = isos.every((iso) => prev.has(iso));
+      const next = new Set(prev);
+      for (const iso of isos) {
+        if (allSelected) next.delete(iso);
+        else next.add(iso);
+      }
+      return next;
+    });
+  }
+
   if (slotsByDay.length === 0 || timeLabels.length === 0) {
     return (
       <p className="text-sm text-zinc-500 dark:text-zinc-500">
@@ -78,19 +92,31 @@ export function AvailabilityGrid(props: Props) {
       }}
     >
       <div />
-      {slotsByDay.map((day) => (
-        <div
-          key={day[0].toISOString()}
-          className="px-1 pb-1 text-center font-medium text-zinc-700 dark:text-zinc-300"
-        >
-          {formatDayLabel(day[0])}
-        </div>
-      ))}
+      {slotsByDay.map((day) =>
+        props.mode === "edit" ? (
+          <button
+            key={day[0].toISOString()}
+            type="button"
+            onClick={() => handleDayHeaderClick(day)}
+            title="Select the whole day"
+            className="cursor-pointer bg-transparent px-1 pb-1 text-center font-medium text-zinc-700 hover:text-emerald-600 dark:text-zinc-300 dark:hover:text-emerald-400"
+          >
+            {formatDayLabel(day[0])}
+          </button>
+        ) : (
+          <div
+            key={day[0].toISOString()}
+            className="px-1 pb-1 text-center font-medium text-zinc-700 dark:text-zinc-300"
+          >
+            {formatDayLabel(day[0])}
+          </div>
+        ),
+      )}
 
       {timeLabels.map((_, rowIndex) => (
         <Fragment key={`row-${rowIndex}`}>
           <div className="pr-2 text-right text-zinc-500 dark:text-zinc-500">
-            {rowIndex % 2 === 0 ? formatTimeLabel(timeLabels[rowIndex]) : ""}
+            {formatTimeLabel(timeLabels[rowIndex])}
           </div>
           {slotsByDay.map((day) => {
             const slot = day[rowIndex];
@@ -103,7 +129,7 @@ export function AvailabilityGrid(props: Props) {
                   key={iso}
                   data-iso={iso}
                   onPointerDown={() => handlePointerDown(iso)}
-                  className={`h-5 cursor-pointer border border-zinc-200 dark:border-zinc-800 ${
+                  className={`h-6 cursor-pointer border border-zinc-200 dark:border-zinc-800 ${
                     isSelected
                       ? "bg-emerald-500 dark:bg-emerald-600"
                       : "bg-white dark:bg-zinc-900"
@@ -123,7 +149,7 @@ export function AvailabilityGrid(props: Props) {
               <div
                 key={iso}
                 title={title}
-                className="h-5 border border-zinc-200 dark:border-zinc-800"
+                className="h-6 border border-zinc-200 dark:border-zinc-800"
                 style={{
                   backgroundColor:
                     opacity > 0 ? `rgba(16, 185, 129, ${0.15 + opacity * 0.85})` : undefined,

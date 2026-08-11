@@ -55,7 +55,7 @@ describe("event slug API routes", () => {
     const res = await respond(
       jsonRequest(`http://localhost/api/events/${slug}/respond`, {
         name: "Alex",
-        slotStarts: ["2027-02-01T09:00:00.000Z", "2027-02-01T09:30:00.000Z"],
+        slotStarts: ["2027-02-01T09:00:00.000Z", "2027-02-01T10:00:00.000Z"],
       }),
       params(slug),
     );
@@ -72,7 +72,7 @@ describe("event slug API routes", () => {
     const first = await respond(
       jsonRequest(`http://localhost/api/events/${slug}/respond`, {
         name: "Alex",
-        slotStarts: ["2027-02-01T09:00:00.000Z", "2027-02-01T09:30:00.000Z"],
+        slotStarts: ["2027-02-01T09:00:00.000Z", "2027-02-01T10:00:00.000Z"],
       }),
       params(slug),
     );

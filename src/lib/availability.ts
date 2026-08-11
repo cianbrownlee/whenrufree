@@ -1,4 +1,4 @@
-const SLOT_MINUTES = 30;
+const SLOT_MINUTES = 60;
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 24 * 60 * MS_PER_MINUTE;
 
@@ -8,7 +8,7 @@ function parseTimeToMinutes(time: string): number {
 }
 
 /**
- * Every 30-minute slot start across each day in [startDate, endDate], within
+ * Every hourly slot start across each day in [startDate, endDate], within
  * [dayStartTime, dayEndTime) on each of those days. All arithmetic is done in
  * UTC so results are independent of the host machine's timezone — per the
  * product spec, there is no per-visitor timezone conversion.
