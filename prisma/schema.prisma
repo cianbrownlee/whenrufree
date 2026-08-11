@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Event {
+  id           String       @id @default(cuid())
+  slug         String       @unique
+  title        String
+  startDate    DateTime     @db.Date
+  endDate      DateTime     @db.Date
+  dayStartTime String
+  dayEndTime   String
+  createdAt    DateTime     @default(now())
+  respondents  Respondent[]
+}
+
+model Respondent {
+  id              String             @id @default(cuid())
+  eventId         String
+  event           Event              @relation(fields: [eventId], references: [id])
+  name            String
+  respondentToken String             @unique
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  availability    AvailabilitySlot[]
+
+  @@index([eventId])
+}
+
+model AvailabilitySlot {
+  id           String     @id @default(cuid())
+  respondentId String
+  respondent   Respondent @relation(fields: [respondentId], references: [id], onDelete: Cascade)
+  slotStart    DateTime
+
+  @@unique([respondentId, slotStart])
+}
