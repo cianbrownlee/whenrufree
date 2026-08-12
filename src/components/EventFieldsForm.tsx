@@ -19,6 +19,13 @@ const inputClassName =
 const labelClassName =
   "flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200";
 
+// Chrome/Edge/Firefox only open the native date/time picker when you click
+// the small calendar icon, not the text itself. showPicker() lets a click
+// anywhere on the field open it, which is what people actually expect.
+function openPicker(e: React.MouseEvent<HTMLInputElement>) {
+  e.currentTarget.showPicker?.();
+}
+
 export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
   return (
     <div className="flex flex-col gap-5">
@@ -40,6 +47,7 @@ export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
             type="date"
             value={value.startDate}
             onChange={(e) => onChange({ ...value, startDate: e.target.value })}
+            onClick={openPicker}
             className={inputClassName}
           />
         </label>
@@ -49,6 +57,7 @@ export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
             type="date"
             value={value.endDate}
             onChange={(e) => onChange({ ...value, endDate: e.target.value })}
+            onClick={openPicker}
             className={inputClassName}
           />
         </label>
@@ -75,6 +84,7 @@ export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
               type="time"
               value={value.dayStartTime}
               onChange={(e) => onChange({ ...value, dayStartTime: e.target.value })}
+              onClick={openPicker}
               className={inputClassName}
             />
           </label>
@@ -84,6 +94,7 @@ export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
               type="time"
               value={value.dayEndTime}
               onChange={(e) => onChange({ ...value, dayEndTime: e.target.value })}
+              onClick={openPicker}
               className={inputClassName}
             />
           </label>
