@@ -1,31 +1,60 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { MAX_DATE_RANGE_DAYS } from "@/lib/constants";
+import { useEffect, useState } from "react";
+import { EventFieldsForm, EventFieldsValue } from "@/components/EventFieldsForm";
+import { setStoredCreatorToken } from "@/lib/creatorToken";
 import { validateCreateEventInput } from "@/lib/eventInput";
+import { getMyEvents, MyEventEntry, upsertMyEvent } from "@/lib/myEvents";
+
+const EMPTY_FORM_VALUE: EventFieldsValue = {
+  title: "",
+  startDate: "",
+  endDate: "",
+  dayStartTime: "09:00",
+  dayEndTime: "21:00",
+  allDay: false,
+};
+
+function formatDateRange(startDate: string, endDate: string): string {
+  const format = (d: string) =>
+    new Date(`${d}T00:00:00.000Z`).toLocaleDateString("en-US", {
+      timeZone: "UTC",
+      month: "short",
+      day: "numeric",
+    });
+  return startDate === endDate ? format(startDate) : `${format(startDate)} – ${format(endDate)}`;
+}
+
+function roleLabel(entry: MyEventEntry): string {
+  if (entry.isCreator && entry.isRespondent) return "Host · Responded";
+  if (entry.isCreator) return "Host";
+  return "Responded";
+}
 
 export default function Home() {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [dayStartTime, setDayStartTime] = useState("09:00");
-  const [dayEndTime, setDayEndTime] = useState("21:00");
-  const [allDay, setAllDay] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [myEvents, setMyEvents] = useState<MyEventEntry[] | null>(null);
+  const [formValue, setFormValue] = useState<EventFieldsValue>(EMPTY_FORM_VALUE);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    queueMicrotask(() => setMyEvents(getMyEvents()));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     const input = {
-      title,
-      startDate,
-      endDate,
-      dayStartTime: allDay ? "00:00" : dayStartTime,
-      dayEndTime: allDay ? "24:00" : dayEndTime,
+      title: formValue.title,
+      startDate: formValue.startDate,
+      endDate: formValue.endDate,
+      dayStartTime: formValue.allDay ? "00:00" : formValue.dayStartTime,
+      dayEndTime: formValue.allDay ? "24:00" : formValue.dayEndTime,
     };
     const validated = validateCreateEventInput(input);
     if (!validated.ok) {
@@ -45,6 +74,14 @@ export default function Home() {
         setError(data.error ?? "Something went wrong.");
         return;
       }
+      setStoredCreatorToken(data.slug, data.creatorToken);
+      upsertMyEvent({
+        slug: data.slug,
+        title: formValue.title,
+        startDate: formValue.startDate,
+        endDate: formValue.endDate,
+        role: "creator",
+      });
       router.push(`/e/${data.slug}`);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -59,98 +96,75 @@ export default function Home() {
         <h1 className="mb-1 text-2xl font-semibold text-black dark:text-zinc-50">
           whenrufree
         </h1>
-        <p className="mb-8 text-sm text-zinc-600 dark:text-zinc-400">
-          Pick a date range and daily time window. You&apos;ll get a link to
-          share — no sign-in needed for you or anyone you send it to.
-        </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            Title
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Team offsite"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-            />
-          </label>
+        {!showCreateForm && (
+          <>
+            <p className="mb-8 text-sm text-zinc-600 dark:text-zinc-400">
+              Pick a date range and daily time window. You&apos;ll get a link
+              to share — no sign-in needed for you or anyone you send it to.
+            </p>
 
-          <div className="flex gap-3">
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              Start date
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              End date
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-              />
-            </label>
-          </div>
-          <p className="-mt-3 text-xs text-zinc-500 dark:text-zinc-500">
-            Up to {MAX_DATE_RANGE_DAYS} days.
-          </p>
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(true)}
+              className="rounded-full bg-black px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            >
+              Create event
+            </button>
 
-          <label className="-mb-2 flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            <input
-              type="checkbox"
-              checked={allDay}
-              onChange={(e) => setAllDay(e.target.checked)}
-              className="h-4 w-4"
-            />
-            All day (midnight to midnight)
-          </label>
+            {myEvents && myEvents.length > 0 && (
+              <section className="mt-10">
+                <h2 className="mb-3 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                  Your events
+                </h2>
+                <ul className="flex flex-col gap-2">
+                  {myEvents.map((event) => (
+                    <li key={event.slug}>
+                      <Link
+                        href={`/e/${event.slug}`}
+                        className="flex flex-col rounded-md border border-zinc-200 px-3 py-2 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+                      >
+                        <span className="text-sm font-medium text-black dark:text-zinc-50">
+                          {event.title}
+                        </span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">
+                          {formatDateRange(event.startDate, event.endDate)} · {roleLabel(event)}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </>
+        )}
 
-          {!allDay && (
-            <div className="flex gap-3">
-              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                Available from
-                <input
-                  type="time"
-                  value={dayStartTime}
-                  onChange={(e) => setDayStartTime(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                />
-              </label>
-              <label className="flex flex-1 flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                Until
-                <input
-                  type="time"
-                  value={dayEndTime}
-                  onChange={(e) => setDayEndTime(e.target.value)}
-                  className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-base text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
-                />
-              </label>
+        {showCreateForm && (
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
+            <EventFieldsForm value={formValue} onChange={setFormValue} />
+
+            {error && (
+              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-full bg-black px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              >
+                {submitting ? "Creating…" : "Create event"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                Cancel
+              </button>
             </div>
-          )}
-          <p className="-mt-3 text-xs text-zinc-500 dark:text-zinc-500">
-            Applied to every day in the range. No timezone conversion — use
-            whatever timezone you have in mind.
-            {allDay &&
-              " For an overnight span, respondents can mark late slots on one day and early slots on the next."}
-          </p>
-
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="mt-2 rounded-full bg-black px-5 py-2.5 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-          >
-            {submitting ? "Creating…" : "Create event"}
-          </button>
-        </form>
+          </form>
+        )}
       </main>
     </div>
   );

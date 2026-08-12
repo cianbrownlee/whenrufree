@@ -22,9 +22,12 @@ export async function POST(request: NextRequest) {
     const slug = nanoid(SLUG_LENGTH);
     try {
       const event = await prisma.event.create({
-        data: { slug, title, startDate, endDate, dayStartTime, dayEndTime },
+        data: { slug, title, startDate, endDate, dayStartTime, dayEndTime, creatorToken: nanoid() },
       });
-      return NextResponse.json({ slug: event.slug }, { status: 201 });
+      return NextResponse.json(
+        { slug: event.slug, creatorToken: event.creatorToken },
+        { status: 201 },
+      );
     } catch (error) {
       const isSlugCollision =
         typeof error === "object" &&

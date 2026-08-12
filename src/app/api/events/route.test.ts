@@ -35,9 +35,12 @@ describe("POST /api/events", () => {
     const data = await res.json();
     expect(typeof data.slug).toBe("string");
     expect(data.slug.length).toBeGreaterThan(0);
+    expect(typeof data.creatorToken).toBe("string");
+    expect(data.creatorToken.length).toBeGreaterThan(0);
 
     const event = await prisma.event.findUnique({ where: { slug: data.slug } });
     expect(event?.title).toBe(validInput.title);
+    expect(event?.creatorToken).toBe(data.creatorToken);
     if (event) createdEventIds.push(event.id);
   });
 

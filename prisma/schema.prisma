@@ -18,6 +18,7 @@ model Event {
   endDate      DateTime     @db.Date
   dayStartTime String
   dayEndTime   String
+  creatorToken String       @unique
   createdAt    DateTime     @default(now())
   respondents  Respondent[]
 }
