@@ -62,4 +62,14 @@ describe("POST /api/events", () => {
     );
     expect(res.status).toBe(400);
   });
+
+  it("rejects an event that starts in the past", async () => {
+    const res = await createEvent(
+      jsonRequest({ ...validInput, startDate: "2001-01-01", endDate: "2001-01-02" }),
+    );
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({
+      error: "Start date can't be in the past.",
+    });
+  });
 });

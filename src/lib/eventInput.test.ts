@@ -45,4 +45,22 @@ describe("validateCreateEventInput", () => {
     });
     expect(result.ok).toBe(false);
   });
+
+  it("enforces a minimum start date while allowing an existing past date", () => {
+    const options = { minimumStartDate: "2026-09-01" };
+
+    expect(
+      validateCreateEventInput(
+        { ...base, startDate: "2026-08-31", endDate: "2026-08-31" },
+        options,
+      ),
+    ).toEqual({ ok: false, error: "Start date can't be in the past." });
+    expect(validateCreateEventInput(base, options).ok).toBe(true);
+    expect(
+      validateCreateEventInput(
+        { ...base, startDate: "2026-08-31", endDate: "2026-08-31" },
+        { ...options, allowedStartDate: "2026-08-31" },
+      ).ok,
+    ).toBe(true);
+  });
 });
