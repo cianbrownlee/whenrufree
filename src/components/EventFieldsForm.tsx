@@ -62,6 +62,7 @@ export function EventFieldsForm({
           <input
             type="date"
             value={value.endDate}
+            min={value.startDate || minimumStartDate}
             onChange={(e) => onChange({ ...value, endDate: e.target.value })}
             onClick={openPicker}
             className={inputClassName}
