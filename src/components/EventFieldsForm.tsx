@@ -12,6 +12,7 @@ export interface EventFieldsValue {
 interface EventFieldsFormProps {
   value: EventFieldsValue;
   onChange: (value: EventFieldsValue) => void;
+  minimumStartDate?: string;
 }
 
 const inputClassName =
@@ -26,7 +27,11 @@ function openPicker(e: React.MouseEvent<HTMLInputElement>) {
   e.currentTarget.showPicker?.();
 }
 
-export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
+export function EventFieldsForm({
+  value,
+  onChange,
+  minimumStartDate,
+}: EventFieldsFormProps) {
   return (
     <div className="flex flex-col gap-5">
       <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -46,6 +51,7 @@ export function EventFieldsForm({ value, onChange }: EventFieldsFormProps) {
           <input
             type="date"
             value={value.startDate}
+            min={minimumStartDate}
             onChange={(e) => onChange({ ...value, startDate: e.target.value })}
             onClick={openPicker}
             className={inputClassName}

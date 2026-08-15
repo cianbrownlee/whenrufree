@@ -7,7 +7,7 @@ import {
   clearStoredCreatorToken,
   getStoredCreatorToken,
 } from "@/lib/creatorToken";
-import { validateCreateEventInput } from "@/lib/eventInput";
+import { currentUtcDate, validateCreateEventInput } from "@/lib/eventInput";
 import { groupSlotsByDay } from "@/lib/grid";
 import { upsertMyEvent } from "@/lib/myEvents";
 import {
@@ -205,6 +205,13 @@ export function EventView({
       (eventEditValue.allDay ? "00:00" : eventEditValue.dayStartTime) !== dayStartTime ||
       (eventEditValue.allDay ? "24:00" : eventEditValue.dayEndTime) !== dayEndTime);
 
+  const existingStartDate = startDate.slice(0, 10);
+  const today = currentUtcDate();
+  const eventEditMinimumStartDate =
+    existingStartDate < today && eventEditValue?.startDate === existingStartDate
+      ? undefined
+      : today;
+
   async function handleEventEditSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!eventEditValue || !creatorToken) return;
@@ -217,7 +224,10 @@ export function EventView({
       dayStartTime: eventEditValue.allDay ? "00:00" : eventEditValue.dayStartTime,
       dayEndTime: eventEditValue.allDay ? "24:00" : eventEditValue.dayEndTime,
     };
-    const validated = validateCreateEventInput(input);
+    const validated = validateCreateEventInput(input, {
+      minimumStartDate: today,
+      allowedStartDate: existingStartDate,
+    });
     if (!validated.ok) {
       setEventEditError(validated.error);
       return;
@@ -285,7 +295,11 @@ export function EventView({
 
         {showEventEditForm && eventEditValue && (
           <form onSubmit={handleEventEditSubmit} className="mb-10 rounded-md border border-zinc-200 p-4 dark:border-zinc-800">
-            <EventFieldsForm value={eventEditValue} onChange={setEventEditValue} />
+            <EventFieldsForm
+              value={eventEditValue}
+              onChange={setEventEditValue}
+              minimumStartDate={eventEditMinimumStartDate}
+            />
             {editWillChangeWindow && (
               <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
                 {respondentCount} {respondentCount === 1 ? "response" : "responses"} already
