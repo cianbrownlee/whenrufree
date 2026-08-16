@@ -263,6 +263,42 @@ describe("event slug API routes", () => {
     expect(res.status).toBe(400);
   });
 
+  it("allows an existing past start date but rejects changing it to another past date", async () => {
+    await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        startDate: new Date("2001-01-01T00:00:00.000Z"),
+        endDate: new Date("2001-01-02T00:00:00.000Z"),
+      },
+    });
+
+    const unchanged = await updateEvent(
+      patchRequest(`http://localhost/api/events/${slug}`, {
+        creatorToken,
+        title: "Updated old event",
+        startDate: "2001-01-01",
+        endDate: "2001-01-02",
+        dayStartTime: "09:00",
+        dayEndTime: "11:00",
+      }),
+      params(slug),
+    );
+    expect(unchanged.status).toBe(200);
+
+    const changed = await updateEvent(
+      patchRequest(`http://localhost/api/events/${slug}`, {
+        creatorToken,
+        title: "Updated old event",
+        startDate: "2001-01-02",
+        endDate: "2001-01-03",
+        dayStartTime: "09:00",
+        dayEndTime: "11:00",
+      }),
+      params(slug),
+    );
+    expect(changed.status).toBe(400);
+  });
+
   it("narrowing the window via PATCH drops now-out-of-window slots from the aggregate", async () => {
     await respond(
       jsonRequest(`http://localhost/api/events/${slug}/respond`, {

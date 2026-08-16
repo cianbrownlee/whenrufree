@@ -16,14 +16,30 @@ export interface ValidatedEventInput {
   dayEndTime: string;
 }
 
+interface EventInputValidationOptions {
+  minimumStartDate?: string; // "YYYY-MM-DD"
+  allowedStartDate?: string; // permits an existing event to retain a past date
+}
+
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 // "24:00" is a valid dayEndTime meaning midnight at the end of the day (an
 // "all day" window), so the last hourly slot of the day is included.
 const END_OF_DAY = "24:00";
 
+export function currentDateForTimezoneOffset(timezoneOffsetMinutes: unknown): string {
+  const offset =
+    typeof timezoneOffsetMinutes === "number" &&
+    Number.isFinite(timezoneOffsetMinutes) &&
+    Math.abs(timezoneOffsetMinutes) <= 14 * 60
+      ? timezoneOffsetMinutes
+      : 0;
+  return new Date(Date.now() - offset * 60_000).toISOString().slice(0, 10);
+}
+
 export function validateCreateEventInput(
   input: CreateEventInput,
+  options: EventInputValidationOptions = {},
 ): { ok: true; data: ValidatedEventInput } | { ok: false; error: string } {
   const title = input.title?.trim() ?? "";
   if (!title) return { ok: false, error: "Title is required." };
@@ -36,6 +52,13 @@ export function validateCreateEventInput(
   const endDate = new Date(`${input.endDate}T00:00:00.000Z`);
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     return { ok: false, error: "Invalid date." };
+  }
+  if (
+    options.minimumStartDate &&
+    input.startDate < options.minimumStartDate &&
+    input.startDate !== options.allowedStartDate
+  ) {
+    return { ok: false, error: "Start date can't be in the past." };
   }
   if (endDate < startDate) {
     return { ok: false, error: "End date must be on or after start date." };

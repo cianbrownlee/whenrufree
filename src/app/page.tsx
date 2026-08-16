@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EventFieldsForm, EventFieldsValue } from "@/components/EventFieldsForm";
 import { setStoredCreatorToken } from "@/lib/creatorToken";
-import { validateCreateEventInput } from "@/lib/eventInput";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "@/lib/eventInput";
 import { getMyEvents, MyEventEntry, upsertMyEvent } from "@/lib/myEvents";
 
 const EMPTY_FORM_VALUE: EventFieldsValue = {
@@ -35,6 +38,7 @@ function roleLabel(entry: MyEventEntry): string {
 
 export default function Home() {
   const router = useRouter();
+  const [minimumStartDate, setMinimumStartDate] = useState<string>();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [myEvents, setMyEvents] = useState<MyEventEntry[] | null>(null);
   const [formValue, setFormValue] = useState<EventFieldsValue>(EMPTY_FORM_VALUE);
@@ -42,7 +46,12 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    queueMicrotask(() => setMyEvents(getMyEvents()));
+    queueMicrotask(() => {
+      setMyEvents(getMyEvents());
+      setMinimumStartDate(
+        currentDateForTimezoneOffset(new Date().getTimezoneOffset()),
+      );
+    });
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -56,7 +65,9 @@ export default function Home() {
       dayStartTime: formValue.allDay ? "00:00" : formValue.dayStartTime,
       dayEndTime: formValue.allDay ? "24:00" : formValue.dayEndTime,
     };
-    const validated = validateCreateEventInput(input);
+    const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+    const today = currentDateForTimezoneOffset(timezoneOffsetMinutes);
+    const validated = validateCreateEventInput(input, { minimumStartDate: today });
     if (!validated.ok) {
       setError(validated.error);
       return;
@@ -67,7 +78,7 @@ export default function Home() {
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
+        body: JSON.stringify({ ...input, timezoneOffsetMinutes }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -141,7 +152,11 @@ export default function Home() {
 
         {showCreateForm && (
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
-            <EventFieldsForm value={formValue} onChange={setFormValue} />
+            <EventFieldsForm
+              value={formValue}
+              onChange={setFormValue}
+              minimumStartDate={minimumStartDate}
+            />
 
             {error && (
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

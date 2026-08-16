@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventWithAggregate } from "@/lib/eventAggregate";
-import { validateCreateEventInput } from "@/lib/eventInput";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "@/lib/eventInput";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -38,16 +41,19 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing creator token." }, { status: 400 });
   }
 
-  const validated = validateCreateEventInput(body);
-  if (!validated.ok) {
-    return NextResponse.json({ error: validated.error }, { status: 400 });
-  }
-
   const event = await prisma.event.findFirst({
     where: { slug, creatorToken: body.creatorToken },
   });
   if (!event) {
     return NextResponse.json({ error: "Event not found." }, { status: 404 });
+  }
+
+  const validated = validateCreateEventInput(body, {
+    minimumStartDate: currentDateForTimezoneOffset(body.timezoneOffsetMinutes),
+    allowedStartDate: event.startDate.toISOString().slice(0, 10),
+  });
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 });
   }
 
   const updated = await prisma.event.update({
