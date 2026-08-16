@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { validateCreateEventInput } from "./eventInput";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "./eventInput";
 
 const base = {
   title: "Birthday Party",
@@ -10,6 +13,14 @@ const base = {
 };
 
 describe("validateCreateEventInput", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("uses the visitor's local date near a UTC day boundary", () => {
+    vi.setSystemTime(new Date("2026-08-16T00:05:00.000Z"));
+
+    expect(currentDateForTimezoneOffset(300)).toBe("2026-08-15");
+  });
+
   it("accepts a normal daily window", () => {
     expect(validateCreateEventInput(base).ok).toBe(true);
   });

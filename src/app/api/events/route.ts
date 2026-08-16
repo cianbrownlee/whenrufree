@@ -1,6 +1,9 @@
 import { nanoid } from "nanoid";
 import { NextRequest, NextResponse } from "next/server";
-import { currentUtcDate, validateCreateEventInput } from "@/lib/eventInput";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "@/lib/eventInput";
 import { prisma } from "@/lib/prisma";
 
 const SLUG_LENGTH = 10;
@@ -13,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   const validated = validateCreateEventInput(body, {
-    minimumStartDate: currentUtcDate(),
+    minimumStartDate: currentDateForTimezoneOffset(body.timezoneOffsetMinutes),
   });
   if (!validated.ok) {
     return NextResponse.json({ error: validated.error }, { status: 400 });

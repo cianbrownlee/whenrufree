@@ -7,7 +7,10 @@ import {
   clearStoredCreatorToken,
   getStoredCreatorToken,
 } from "@/lib/creatorToken";
-import { currentUtcDate, validateCreateEventInput } from "@/lib/eventInput";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "@/lib/eventInput";
 import { groupSlotsByDay } from "@/lib/grid";
 import { upsertMyEvent } from "@/lib/myEvents";
 import {
@@ -76,11 +79,17 @@ export function EventView({
   const [eventEditSubmitting, setEventEditSubmitting] = useState(false);
   const [eventEditError, setEventEditError] = useState<string | null>(null);
   const [eventSavedAt, setEventSavedAt] = useState<number | null>(null);
+  const [minimumStartDate, setMinimumStartDate] = useState<string>();
 
   useEffect(() => {
     const stored = getStoredToken(slug);
     const creator = getStoredCreatorToken(slug);
-    queueMicrotask(() => setCreatorToken(creator));
+    queueMicrotask(() => {
+      setCreatorToken(creator);
+      setMinimumStartDate(
+        currentDateForTimezoneOffset(new Date().getTimezoneOffset()),
+      );
+    });
     if (stored) {
       upsertMyEvent({
         slug,
@@ -206,11 +215,12 @@ export function EventView({
       (eventEditValue.allDay ? "24:00" : eventEditValue.dayEndTime) !== dayEndTime);
 
   const existingStartDate = startDate.slice(0, 10);
-  const today = currentUtcDate();
   const eventEditMinimumStartDate =
-    existingStartDate < today && eventEditValue?.startDate === existingStartDate
+    minimumStartDate &&
+    existingStartDate < minimumStartDate &&
+    eventEditValue?.startDate === existingStartDate
       ? undefined
-      : today;
+      : minimumStartDate;
 
   async function handleEventEditSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -224,6 +234,8 @@ export function EventView({
       dayStartTime: eventEditValue.allDay ? "00:00" : eventEditValue.dayStartTime,
       dayEndTime: eventEditValue.allDay ? "24:00" : eventEditValue.dayEndTime,
     };
+    const timezoneOffsetMinutes = new Date().getTimezoneOffset();
+    const today = currentDateForTimezoneOffset(timezoneOffsetMinutes);
     const validated = validateCreateEventInput(input, {
       minimumStartDate: today,
       allowedStartDate: existingStartDate,
@@ -238,7 +250,7 @@ export function EventView({
       const res = await fetch(`/api/events/${slug}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ creatorToken, ...input }),
+        body: JSON.stringify({ creatorToken, ...input, timezoneOffsetMinutes }),
       });
       const data = await res.json();
       if (!res.ok) {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEventWithAggregate } from "@/lib/eventAggregate";
-import { currentUtcDate, validateCreateEventInput } from "@/lib/eventInput";
+import {
+  currentDateForTimezoneOffset,
+  validateCreateEventInput,
+} from "@/lib/eventInput";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
@@ -46,7 +49,7 @@ export async function PATCH(
   }
 
   const validated = validateCreateEventInput(body, {
-    minimumStartDate: currentUtcDate(),
+    minimumStartDate: currentDateForTimezoneOffset(body.timezoneOffsetMinutes),
     allowedStartDate: event.startDate.toISOString().slice(0, 10),
   });
   if (!validated.ok) {

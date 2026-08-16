@@ -27,8 +27,14 @@ const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 // "all day" window), so the last hourly slot of the day is included.
 const END_OF_DAY = "24:00";
 
-export function currentUtcDate(): string {
-  return new Date().toISOString().slice(0, 10);
+export function currentDateForTimezoneOffset(timezoneOffsetMinutes: unknown): string {
+  const offset =
+    typeof timezoneOffsetMinutes === "number" &&
+    Number.isFinite(timezoneOffsetMinutes) &&
+    Math.abs(timezoneOffsetMinutes) <= 14 * 60
+      ? timezoneOffsetMinutes
+      : 0;
+  return new Date(Date.now() - offset * 60_000).toISOString().slice(0, 10);
 }
 
 export function validateCreateEventInput(
