@@ -32,6 +32,11 @@ export function EventFieldsForm({
   onChange,
   minimumStartDate,
 }: EventFieldsFormProps) {
+  const endDateBeforeStart =
+    value.startDate !== "" &&
+    value.endDate !== "" &&
+    value.endDate < value.startDate;
+
   return (
     <div className="flex flex-col gap-5">
       <label className="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -63,12 +68,18 @@ export function EventFieldsForm({
             type="date"
             value={value.endDate}
             min={value.startDate || minimumStartDate}
+            aria-invalid={endDateBeforeStart}
             onChange={(e) => onChange({ ...value, endDate: e.target.value })}
             onClick={openPicker}
             className={inputClassName}
           />
         </label>
       </div>
+      {endDateBeforeStart && (
+        <p className="-mt-3 text-sm text-red-600 dark:text-red-400" role="alert">
+          End date must be on or after start date.
+        </p>
+      )}
       <p className="-mt-3 text-xs text-zinc-500 dark:text-zinc-500">
         Up to {MAX_DATE_RANGE_DAYS} days.
       </p>
