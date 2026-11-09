@@ -13,21 +13,24 @@ const geistMono = Geist_Mono({
 });
 
 const siteDescription =
-  "Find when everyone's free. Create a room, share the link, and pick the best time together.";
+  "Pick a date range and a daily time window, share the link, and see when everyone is free. No accounts needed.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://whenrufree.vercel.app"),
-  title: "when r u free",
+  // Vercel sets this to the project's production domain; the fallback is the current address.
+  metadataBase: new URL(
+    `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL ?? "whenrufree-rouge.vercel.app"}`,
+  ),
+  title: "whenrufree",
   description: siteDescription,
   openGraph: {
-    title: "when r u free",
+    title: "whenrufree",
     description: siteDescription,
-    siteName: "when r u free",
+    siteName: "whenrufree",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "when r u free",
+    title: "whenrufree",
     description: siteDescription,
   },
 };

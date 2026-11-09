@@ -4,7 +4,7 @@ A tiny, link-based scheduling tool. A creator picks a date range and a daily tim
 
 No sign-in, ever: the link itself is the access control.
 
-**Live demo:** [whenrufree.vercel.app](https://whenrufree.vercel.app/)
+**Live demo:** [whenrufree-rouge.vercel.app](https://whenrufree-rouge.vercel.app/)
 
 ## Stack
 

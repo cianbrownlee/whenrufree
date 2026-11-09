@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 // Preview card shown when the site's link is shared (LinkedIn, Slack, iMessage, and so on).
-export const alt = "when r u free: find a time that works for everyone";
+export const alt = "whenrufree: find a time that works for everyone";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -32,9 +32,9 @@ export default function OpengraphImage() {
           padding: "0 90px",
         }}
       >
-        <div style={{ display: "flex", fontSize: 92, fontWeight: 700 }}>when r u free</div>
+        <div style={{ display: "flex", fontSize: 92, fontWeight: 700 }}>whenrufree</div>
         <div style={{ display: "flex", fontSize: 38, color: "#a1a1aa", marginTop: 16 }}>
-          Create a room, share the link, and pick the best time together.
+          Share a link and see when everyone is free. No accounts needed.
         </div>
         <div style={{ display: "flex", flexDirection: "column", marginTop: 56 }}>
           {pattern.slice(0, rows).map((row, rowIndex) => (
